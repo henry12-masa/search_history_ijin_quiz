@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>偉人の検索履歴クイズ｜もしGoogleがあったら</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Yu Gothic","Hiragino Sans",sans-serif;
+  background:linear-gradient(135deg,#020617,#0f172a,#1e3a8a);
+  color:#fff;
+}
+.layout{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  gap:20px;
+  padding:20px;
+}
+.game{
+  width:100%;
+  max-width:760px;
+  background:rgba(0,0,0,.64);
+  border:2px solid #60a5fa;
+  border-radius:18px;
+  padding:26px;
+  box-shadow:0 14px 35px rgba(0,0,0,.38);
+}
+h1{
+  text-align:center;
+  color:#bfdbfe;
+  margin-top:0;
+}
+.sub{
+  text-align:center;
+  color:#ddd;
+  margin-bottom:24px;
+  line-height:1.7;
+}
+.status{
+  display:flex;
+  justify-content:space-between;
+  color:#bfdbfe;
+  font-weight:bold;
+  margin-bottom:20px;
+}
+.question{
+  background:rgba(255,255,255,.08);
+  padding:22px;
+  border-radius:14px;
+  line-height:1.8;
+  font-size:1.08rem;
+  margin-bottom:20px;
+  border-left:6px solid #60a5fa;
+}
+.searchbox{
+  background:#f8fafc;
+  color:#0f172a;
+  border-radius:14px;
+  padding:18px;
+  margin-top:12px;
+  box-shadow:inset 0 0 0 2px #cbd5e1;
+}
+.search-title{
+  font-weight:bold;
+  color:#2563eb;
+  margin-bottom:10px;
+}
+.history-item{
+  padding:10px 12px;
+  margin:8px 0;
+  background:#e0f2fe;
+  border-radius:999px;
+  font-weight:bold;
+}
+.choices{
+  display:grid;
+  gap:12px;
+}
+button{
+  border:none;
+  border-radius:12px;
+  padding:15px;
+  font-size:1rem;
+  font-weight:bold;
+  cursor:pointer;
+  background:#dbeafe;
+  color:#172554;
+  transition:.15s;
+}
+button:hover{
+  background:#eff6ff;
+  transform:translateY(-1px);
+}
+button.correct{
+  background:#22c55e;
+  color:#fff;
+}
+button.wrong{
+  background:#dc2626;
+  color:#fff;
+}
+button:disabled{
+  cursor:not-allowed;
+  transform:none;
+}
+.result{
+  margin-top:18px;
+  min-height:50px;
+  line-height:1.7;
+  font-weight:bold;
+}
+.explain{
+  color:#ddd;
+  margin-top:8px;
+  font-weight:normal;
+}
+.restart{
+  display:none;
+  margin-top:20px;
+  width:100%;
+  background:#2563eb;
+  color:#fff;
+}
+.ad-area{
+  width:320px;
+  min-width:320px;
+  position:sticky;
+  top:20px;
+}
+.ad-box{
+  background:rgba(0,0,0,.5);
+  border:2px solid #60a5fa;
+  border-radius:14px;
+  padding:12px;
+}
+.ad-title{
+  text-align:center;
+  color:#bfdbfe;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+.note{
+  margin-top:18px;
+  color:#cbd5e1;
+  font-size:.9rem;
+  line-height:1.7;
+}
+@media(max-width:1000px){
+  .layout{flex-direction:column;align-items:center;}
+  .ad-area{width:100%;min-width:auto;position:static;}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <div class="game">
+    <h1>偉人の検索履歴クイズ</h1>
+    <div class="sub">もし歴史上の偉人たちがGoogleを使っていたら？ 検索履歴から人物を当てよう！</div>
+
+    <div class="status">
+      <div id="count">1 / 50</div>
+      <div id="score">正解 0</div>
+    </div>
+
+    <div id="question" class="question"></div>
+    <div id="choices" class="choices"></div>
+    <div id="result" class="result"></div>
+
+    <button id="restart" class="restart" onclick="restartGame()">もう一度遊ぶ</button>
+
+    <div class="note">
+      ※このクイズは、史実上の人物・出来事・業績をもとにした「もしGoogleがあったら」形式の創作雑学クイズです。
+    </div>
+  </div>
+
+  <div class="ad-area">
+    <div class="ad-box">
+      <div class="ad-title">スポンサー</div>
+
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8398161859137802"
+       crossorigin="anonymous"></script>
+      <!-- チェス -->
+      <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-8398161859137802"
+       data-ad-slot="5599163841"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+      <script>
+       (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const baseQuizData = [
+  {q:"この検索履歴の持ち主は誰？", history:["低い身長　威厳を出す方法","ヨーロッパ　最短で征服する方法","セントヘレナ島　帰り方"], choices:["ナポレオン・ボナパルト","ユリウス・カエサル","徳川家康","アレクサンドロス大王"], answer:"ナポレオン・ボナパルト", explain:"ヨーロッパを席巻したフランス皇帝。晩年はセントヘレナ島へ流されました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["本能寺　逃げ道","天下統一　最短ルート","草履　温め方　上司に好かれる"], choices:["豊臣秀吉","織田信長","徳川家康","明智光秀"], answer:"豊臣秀吉", explain:"草履取りから天下人へ上り詰めた人物として有名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["鳴かぬなら　鳴くまで待とう","関ヶ原　勝率","長生き　天下を取る方法"], choices:["徳川家康","武田信玄","上杉謙信","伊達政宗"], answer:"徳川家康", explain:"忍耐の人物として語られ、関ヶ原後に江戸幕府を開きました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["寺　泊まる　安全","裏切り　タイミング","本能寺　天気"], choices:["明智光秀","石田三成","柴田勝家","足利義昭"], answer:"明智光秀", explain:"1582年、本能寺の変で織田信長を討った人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["うつけ　褒め言葉？","鉄砲　大量購入","天下布武　ロゴデザイン"], choices:["織田信長","豊臣秀吉","黒田官兵衛","真田昌幸"], answer:"織田信長", explain:"鉄砲の活用や革新的な政策で知られる戦国大名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["相対性理論　わかりやすく説明","舌を出す　写真　なぜバズる","E=mc2　意味"], choices:["アルベルト・アインシュタイン","アイザック・ニュートン","ガリレオ・ガリレイ","ニコラ・テスラ"], answer:"アルベルト・アインシュタイン", explain:"相対性理論で知られる20世紀を代表する物理学者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["りんご　落ちた　なぜ","万有引力　名前　かっこいい","猫用ドア　発明"], choices:["アイザック・ニュートン","チャールズ・ダーウィン","ルイ・パスツール","エジソン"], answer:"アイザック・ニュートン", explain:"万有引力の法則で知られる科学者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["地動説　炎上対策","望遠鏡　月　見えすぎ","宗教裁判　言い訳"], choices:["ガリレオ・ガリレイ","コペルニクス","ケプラー","プトレマイオス"], answer:"ガリレオ・ガリレイ", explain:"地動説を支持し、宗教裁判にかけられた科学者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["進化論　炎上する？","ガラパゴス　生き物　違い","種の起源　タイトル案"], choices:["チャールズ・ダーウィン","メンデル","ファーブル","リンネ"], answer:"チャールズ・ダーウィン", explain:"『種の起源』で進化論を広めた自然科学者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["電球　長持ちさせる方法","失敗　1万回　名言っぽく","研究所　寝泊まり"], choices:["トーマス・エジソン","ニコラ・テスラ","グラハム・ベル","ライト兄弟"], answer:"トーマス・エジソン", explain:"電球や蓄音機など多くの発明で知られる発明家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["交流電流　安全性","鳩　かわいい","エジソン　仲直り　方法"], choices:["ニコラ・テスラ","エジソン","アインシュタイン","マイケル・ファラデー"], answer:"ニコラ・テスラ", explain:"交流電流システムなどで知られる発明家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["電話　最初の一言","助手　ワトソン　呼び方","発明　特許　急ぎ"], choices:["グラハム・ベル","エジソン","モールス","スティーブ・ジョブズ"], answer:"グラハム・ベル", explain:"電話の発明で広く知られる人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["飛行機　落ちない方法","自転車屋　副業　空を飛ぶ","初飛行　何秒なら成功？"], choices:["ライト兄弟","リンドバーグ","ガガーリン","アームストロング"], answer:"ライト兄弟", explain:"1903年に動力飛行に成功した兄弟です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["ラジウム　光る　危険？","ノーベル賞　2回　すごさ","研究室　寒い　対策"], choices:["マリ・キュリー","ナイチンゲール","ヘレン・ケラー","レイチェル・カーソン"], answer:"マリ・キュリー", explain:"放射能研究で知られ、ノーベル賞を2度受賞しました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["看護　統計　使い方","クリミア戦争　衛生改善","白衣の天使　由来"], choices:["ナイチンゲール","ジャンヌ・ダルク","マザー・テレサ","マリ・キュリー"], answer:"ナイチンゲール", explain:"近代看護の礎を築き、統計の活用でも知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["耳が聞こえない　話す練習","奇跡の人　本人は誰","サリバン先生　感謝"], choices:["ヘレン・ケラー","アンネ・フランク","マザー・テレサ","ローザ・パークス"], answer:"ヘレン・ケラー", explain:"視覚と聴覚に障害を持ちながら社会活動を行った人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["バス　席　譲らない　その後","公民権運動　始まり","静かな抵抗　意味"], choices:["ローザ・パークス","キング牧師","マルコムX","マザー・テレサ"], answer:"ローザ・パークス", explain:"バスで席を譲ることを拒否し、公民権運動の象徴となりました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["I have a dream　原稿","非暴力　運動　方法","ワシントン大行進　服装"], choices:["キング牧師","ネルソン・マンデラ","リンカーン","ガンジー"], answer:"キング牧師", explain:"非暴力で人種差別撤廃を訴えた公民権運動の指導者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["塩の行進　距離","非暴力　勝てる？","糸車　意味"], choices:["マハトマ・ガンジー","ネルソン・マンデラ","キング牧師","チェ・ゲバラ"], answer:"マハトマ・ガンジー", explain:"非暴力・不服従でインド独立運動を導いた人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["27年　刑務所　耐え方","アパルトヘイト　終わらせ方","大統領　和解　演説"], choices:["ネルソン・マンデラ","キング牧師","リンカーン","カストロ"], answer:"ネルソン・マンデラ", explain:"南アフリカでアパルトヘイト撤廃に尽力し、大統領になりました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["奴隷解放宣言　全文","背が高い　帽子　似合う","南北戦争　勝ち方"], choices:["エイブラハム・リンカーン","ジョージ・ワシントン","ルーズベルト","ケネディ"], answer:"エイブラハム・リンカーン", explain:"アメリカ南北戦争期の大統領で、奴隷解放宣言で知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["建国の父　意味","桜の木　切った　デマ？","初代大統領　プレッシャー"], choices:["ジョージ・ワシントン","リンカーン","ジェファーソン","ベンジャミン・フランクリン"], answer:"ジョージ・ワシントン", explain:"アメリカ初代大統領として知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["凧　雷　実験　危険","避雷針　作り方","100ドル札　人物"], choices:["ベンジャミン・フランクリン","ワシントン","ニュートン","エジソン"], answer:"ベンジャミン・フランクリン", explain:"避雷針の発明や政治活動で知られるアメリカ建国期の人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["三権分立　わかりやすく","法の精神　要約","権力　分ける　メリット"], choices:["モンテスキュー","ルソー","ロック","ヴォルテール"], answer:"モンテスキュー", explain:"『法の精神』で三権分立を説いた思想家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["パンがなければ　言ってない","ベルサイユ　家賃","首飾り事件　巻き込まれ"], choices:["マリー・アントワネット","エカチェリーナ2世","ジャンヌ・ダルク","ヴィクトリア女王"], answer:"マリー・アントワネット", explain:"フランス革命期の王妃。多くの逸話や誤解でも知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["神の声　聞こえた","オルレアン　包囲　勝ち方","火刑　回避　方法"], choices:["ジャンヌ・ダルク","マリー・アントワネット","クレオパトラ","エリザベス1世"], answer:"ジャンヌ・ダルク", explain:"百年戦争でフランス軍を鼓舞し、のちに火刑となりました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["ローマ　同盟　組み方","美貌　政治利用","蛇　毒　痛い？"], choices:["クレオパトラ","ネフェルティティ","卑弥呼","エリザベス1世"], answer:"クレオパトラ", explain:"古代エジプト最後の女王として知られ、ローマの権力者とも関係しました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["ローマ　独裁官　なり方","ブルータス　信頼していい？","賽は投げられた　使い方"], choices:["ユリウス・カエサル","アウグストゥス","ネロ","ハンニバル"], answer:"ユリウス・カエサル", explain:"ローマの政治家・軍人。『賽は投げられた』などの言葉でも有名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["象　アルプス越え　可能？","ローマ軍　倒し方","カルタゴ　復活　方法"], choices:["ハンニバル","カエサル","アレクサンドロス大王","チンギス・ハン"], answer:"ハンニバル", explain:"象を連れてアルプスを越えたことで知られるカルタゴの将軍です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["世界征服　最短ルート","遠征　部下　疲れた","大王　名乗るタイミング"], choices:["アレクサンドロス大王","カエサル","ナポレオン","チンギス・ハン"], answer:"アレクサンドロス大王", explain:"若くして広大な帝国を築いたマケドニアの王です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["モンゴル帝国　広げ方","馬　長距離　疲れない","世界最大　領土　ランキング"], choices:["チンギス・ハン","フビライ・ハン","アッティラ","始皇帝"], answer:"チンギス・ハン", explain:"モンゴル帝国の基礎を築いた人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["万里の長城　費用","不老不死　薬　口コミ","焚書坑儒　炎上"], choices:["始皇帝","劉邦","曹操","孔子"], answer:"始皇帝", explain:"中国を統一した秦の皇帝。不老不死を求めた逸話でも有名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["仁とは　意味","弟子　多すぎる","論語　名言　まとめ"], choices:["孔子","老子","孟子","荘子"], answer:"孔子", explain:"儒教の祖として知られ、『論語』に言行が残されています。"},
+  {q:"この検索履歴の持ち主は誰？", history:["三国志　勝ち組　誰","赤壁　負けた理由","短歌　才能　政治家"], choices:["曹操","劉備","諸葛亮","孫権"], answer:"曹操", explain:"三国志で有名な魏の基礎を築いた政治家・武将です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["泣いて馬謖を斬る　使い方","北伐　成功率","孔明の罠　元ネタ"], choices:["諸葛亮","曹操","劉備","司馬懿"], answer:"諸葛亮", explain:"蜀の軍師として知られ、『孔明』の名で有名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["邪馬台国　場所","魏に使いを送る　手紙","鏡　100枚　使い道"], choices:["卑弥呼","推古天皇","紫式部","北条政子"], answer:"卑弥呼", explain:"邪馬台国の女王として中国の史書に登場します。"},
+  {q:"この検索履歴の持ち主は誰？", history:["源氏物語　続き　長すぎ","宮中　人間関係　疲れる","平安時代　恋愛　手紙"], choices:["紫式部","清少納言","和泉式部","小野小町"], answer:"紫式部", explain:"『源氏物語』の作者として知られる平安時代の作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["春はあけぼの　なぜ","枕草子　ネタ帳","紫式部　仲悪い　噂"], choices:["清少納言","紫式部","小野小町","北条政子"], answer:"清少納言", explain:"『枕草子』の作者として知られる平安時代の随筆家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["いい国作ろう　変更された？","征夷大将軍　なり方","弟と仲直り　無理"], choices:["源頼朝","源義経","平清盛","足利尊氏"], answer:"源頼朝", explain:"鎌倉幕府を開いた人物として知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["壇ノ浦　ジャンプ　成功","兄　怒ってる　理由","悲劇の英雄　なぜ人気"], choices:["源義経","源頼朝","平清盛","楠木正成"], answer:"源義経", explain:"源平合戦で活躍した武将。兄・頼朝との対立でも有名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["鎖国　メリット","参勤交代　費用　大名負担","将軍　長期政権　作り方"], choices:["徳川家光","徳川家康","徳川吉宗","徳川慶喜"], answer:"徳川家光", explain:"江戸幕府3代将軍。参勤交代制度の整備などで知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["黒船　来た　対応","開国　断り方","ペリー　圧が強い"], choices:["徳川慶喜","井伊直弼","坂本龍馬","勝海舟"], answer:"徳川慶喜", explain:"江戸幕府最後の将軍。幕末の開国と政権返上の時代に関わりました。"},
+  {q:"この検索履歴の持ち主は誰？", history:["日本　洗濯　ぜよ","亀山社中　起業","船中八策　テンプレ"], choices:["坂本龍馬","西郷隆盛","高杉晋作","桂小五郎"], answer:"坂本龍馬", explain:"幕末の志士で、亀山社中や船中八策のイメージで知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["犬　散歩　上野","西南戦争　なぜ","維新三傑　自分入る？"], choices:["西郷隆盛","大久保利通","木戸孝允","坂本龍馬"], answer:"西郷隆盛", explain:"明治維新の中心人物の一人で、西南戦争でも知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["学問のすすめ　売れるタイトル","一万円札　顔　いつまで","天は人の上に人を造らず　続き"], choices:["福沢諭吉","渋沢栄一","伊藤博文","夏目漱石"], answer:"福沢諭吉", explain:"『学問のすすめ』で知られる思想家・教育者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["会社　500個　作れる？","新一万円札　いつから","論語と算盤　意味"], choices:["渋沢栄一","福沢諭吉","岩崎弥太郎","松下幸之助"], answer:"渋沢栄一", explain:"多くの企業設立に関わり、『日本資本主義の父』と呼ばれます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["吾輩は猫である　猫の名前","胃痛　文豪　対策","坊っちゃん　モデル"], choices:["夏目漱石","芥川龍之介","太宰治","森鴎外"], answer:"夏目漱石", explain:"『吾輩は猫である』『坊っちゃん』などで知られる文豪です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["羅生門　怖い　理由","蜘蛛の糸　短編　構成","文豪　プレッシャー　対処"], choices:["芥川龍之介","夏目漱石","太宰治","川端康成"], answer:"芥川龍之介", explain:"『羅生門』『蜘蛛の糸』などで知られる作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["人間失格　タイトル　強すぎ","走れメロス　友情　重い","斜陽　売れ行き"], choices:["太宰治","芥川龍之介","三島由紀夫","宮沢賢治"], answer:"太宰治", explain:"『人間失格』『走れメロス』などで知られる作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["銀河鉄道　時刻表","雨ニモマケズ　全文","注文の多い料理店　レビュー"], choices:["宮沢賢治","太宰治","夏目漱石","小林多喜二"], answer:"宮沢賢治", explain:"『銀河鉄道の夜』『雨ニモマケズ』などで知られる作家・詩人です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["ゲルニカ　意味","青の時代　暗すぎ","絵　横顔と正面　同時に描く"], choices:["パブロ・ピカソ","ゴッホ","ダリ","モネ"], answer:"パブロ・ピカソ", explain:"キュビスムや『ゲルニカ』で知られる画家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["ひまわり　描きすぎ","耳　切った　その後","絵　生前　売れない"], choices:["フィンセント・ファン・ゴッホ","ピカソ","モネ","ダ・ヴィンチ"], answer:"フィンセント・ファン・ゴッホ", explain:"『ひまわり』などで知られ、生前は評価されにくかった画家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["モナリザ　笑ってる？","最後の晩餐　修復　大丈夫？","万能の天才　肩書き　多すぎ"], choices:["レオナルド・ダ・ヴィンチ","ミケランジェロ","ラファエロ","ボッティチェリ"], answer:"レオナルド・ダ・ヴィンチ", explain:"『モナリザ』『最後の晩餐』で知られるルネサンスの天才です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["天井画　首が痛い","ダビデ像　筋肉　参考","システィーナ礼拝堂　納期"], choices:["ミケランジェロ","ダ・ヴィンチ","ラファエロ","ロダン"], answer:"ミケランジェロ", explain:"システィーナ礼拝堂天井画やダビデ像で知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["睡蓮　何枚描いた","印象派　名前　悪口？","庭　絵になる　作り方"], choices:["クロード・モネ","ゴッホ","ルノワール","セザンヌ"], answer:"クロード・モネ", explain:"印象派を代表する画家で、『睡蓮』の連作が有名です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["運命　ジャジャジャジャーン","耳が聞こえない　作曲","第九　合唱　入れる理由"], choices:["ベートーヴェン","モーツァルト","バッハ","ショパン"], answer:"ベートーヴェン", explain:"難聴に苦しみながら多くの名曲を残した作曲家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["神童　プレッシャー","レクイエム　納期","魔笛　あらすじ"], choices:["モーツァルト","ベートーヴェン","シューベルト","ワーグナー"], answer:"モーツァルト", explain:"幼少期から才能を発揮した古典派を代表する作曲家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["ノクターン　意味","ピアノ　繊細　弾き方","ポーランド　祖国　恋しい"], choices:["ショパン","リスト","バッハ","ドビュッシー"], answer:"ショパン", explain:"ピアノ曲で知られるポーランド出身の作曲家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["白鳥の湖　初演　評判","くるみ割り人形　クリスマス","大砲　曲に入れる"], choices:["チャイコフスキー","モーツァルト","ベートーヴェン","ストラヴィンスキー"], answer:"チャイコフスキー", explain:"『白鳥の湖』『くるみ割り人形』『1812年』などで知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["電話帳　分厚い　破る方法","相対性理論　手品に使える？","舌を出す　写真　ライバル"], choices:["アインシュタイン","ニュートン","ホーキング","ファインマン"], answer:"アインシュタイン", explain:"科学者としての知名度が非常に高く、写真や逸話も多い人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["月面　第一声　練習","小さな一歩　大きな飛躍　英語","宇宙服　重い"], choices:["ニール・アームストロング","ガガーリン","バズ・オルドリン","ライト兄弟"], answer:"ニール・アームストロング", explain:"人類で初めて月面に降り立った宇宙飛行士です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["地球は青かった　原文","宇宙　初めて　怖い","帰還カプセル　安全"], choices:["ユーリイ・ガガーリン","アームストロング","テレシコワ","コロリョフ"], answer:"ユーリイ・ガガーリン", explain:"人類初の有人宇宙飛行を行った人物です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["Apple　ロゴ　かじられてる理由","黒タートルネック　通販","プレゼン　one more thing"], choices:["スティーブ・ジョブズ","ビル・ゲイツ","イーロン・マスク","マーク・ザッカーバーグ"], answer:"スティーブ・ジョブズ", explain:"Apple共同創業者。製品発表の演出でも知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["Windows　強制終了　言い訳","大学中退　成功例","富豪　寄付　やり方"], choices:["ビル・ゲイツ","スティーブ・ジョブズ","ジェフ・ベゾス","ラリー・ペイジ"], answer:"ビル・ゲイツ", explain:"Microsoft共同創業者で、のちに慈善活動でも知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["Facebook　最初の名前","大学寮　起業","メタバース　流行らせ方"], choices:["マーク・ザッカーバーグ","イーロン・マスク","ビル・ゲイツ","ラリー・ペイジ"], answer:"マーク・ザッカーバーグ", explain:"Facebookを創業し、Metaの中心人物として知られます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["火星　移住　いつ","ロケット　着陸　成功率","犬の名前　仮想通貨"], choices:["イーロン・マスク","ジェフ・ベゾス","スティーブ・ジョブズ","ホリエモン"], answer:"イーロン・マスク", explain:"SpaceXやTeslaなどで知られ、火星移住構想でも話題です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["Amazon　本だけじゃ足りない","宇宙旅行　費用","倉庫　効率化　方法"], choices:["ジェフ・ベゾス","イーロン・マスク","ビル・ゲイツ","ウォーレン・バフェット"], answer:"ジェフ・ベゾス", explain:"Amazon創業者で、宇宙企業Blue Originにも関わります。"},
+  {q:"この検索履歴の持ち主は誰？", history:["コーラ　毎日　健康","株　長期保有　いつ売る","オマハの賢人　由来"], choices:["ウォーレン・バフェット","ジョージ・ソロス","ピーター・リンチ","渋沢栄一"], answer:"ウォーレン・バフェット", explain:"長期投資で知られる投資家で、『オマハの賢人』と呼ばれます。"},
+  {q:"この検索履歴の持ち主は誰？", history:["相棒　ワトソン　有能","シャーロック　実在？","推理小説　トリック　作り方"], choices:["コナン・ドイル","アガサ・クリスティ","エドガー・アラン・ポー","江戸川乱歩"], answer:"コナン・ドイル", explain:"シャーロック・ホームズシリーズの作者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["名探偵　ポアロ　口ひげ","そして誰もいなくなった　人数","ミステリー　犯人　意外にする"], choices:["アガサ・クリスティ","コナン・ドイル","江戸川乱歩","横溝正史"], answer:"アガサ・クリスティ", explain:"『ミステリーの女王』と呼ばれる推理作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["吾輩は猫である　ライバル作品","こころ　先生　重い","ロンドン留学　つらい"], choices:["夏目漱石","森鴎外","正岡子規","島崎藤村"], answer:"夏目漱石", explain:"日本近代文学を代表する作家で、留学経験も作品背景に関わります。"},
+  {q:"この検索履歴の持ち主は誰？", history:["雪国　冒頭　有名","ノーベル文学賞　着物","トンネルを抜けると　続き"], choices:["川端康成","太宰治","三島由紀夫","大江健三郎"], answer:"川端康成", explain:"『雪国』などで知られ、日本人初のノーベル文学賞作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["老人と海　短い　深い","ハードボイルド　書き方","ノーベル文学賞　スピーチ"], choices:["ヘミングウェイ","トールキン","カフカ","オーウェル"], answer:"ヘミングウェイ", explain:"『老人と海』などで知られるアメリカの作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["指輪物語　地図　作り方","エルフ語　文法","ホビット　身長"], choices:["J・R・R・トールキン","C・S・ルイス","ジョージ・オーウェル","カフカ"], answer:"J・R・R・トールキン", explain:"『指輪物語』『ホビットの冒険』の作者です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["1984　監視社会　怖い","ビッグブラザー　意味","動物農場　風刺　誰"], choices:["ジョージ・オーウェル","カフカ","ヘミングウェイ","カミュ"], answer:"ジョージ・オーウェル", explain:"『1984年』『動物農場』で知られる作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["変身　虫　何の虫","会社　休めない　不条理","カフカ的　意味"], choices:["フランツ・カフカ","カミュ","ドストエフスキー","トルストイ"], answer:"フランツ・カフカ", explain:"『変身』など不条理文学で知られる作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["罪と罰　長い","ラスコーリニコフ　名前　難しい","地下室　手記　暗い"], choices:["ドストエフスキー","トルストイ","チェーホフ","ゴーゴリ"], answer:"ドストエフスキー", explain:"『罪と罰』『カラマーゾフの兄弟』などで知られるロシア文学の巨匠です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["戦争と平和　登場人物　多い","アンナ・カレーニナ　感想","人生　意味　農業"], choices:["トルストイ","ドストエフスキー","チェーホフ","ツルゲーネフ"], answer:"トルストイ", explain:"『戦争と平和』『アンナ・カレーニナ』で知られる作家です。"},
+  {q:"この検索履歴の持ち主は誰？", history:["吾輩　猫　名前なし","坊っちゃん　先生　転職","こころ　読後感　重い"], choices:["夏目漱石","太宰治","芥川龍之介","宮沢賢治"], answer:"夏目漱石", explain:"日本の国民的作家として幅広く読まれています。"}
+];
+
+const quizData = [];
+for(let i = 0; i < 4; i++){
+  baseQuizData.forEach(item => {
+    quizData.push({
+      q:item.q,
+      history:[...item.history],
+      choices:[...item.choices],
+      answer:item.answer,
+      explain:item.explain
+    });
+  });
+}
+
+let questions = [];
+let current = 0;
+let score = 0;
+let lock = false;
+
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startGame(){
+  questions = shuffle([...quizData]).slice(0,50);
+  current = 0;
+  score = 0;
+  lock = false;
+  document.getElementById("restart").style.display = "none";
+  showQuestion();
+}
+
+function showQuestion(){
+  lock = false;
+  const q = questions[current];
+
+  document.getElementById("count").textContent = `${current + 1} / 50`;
+  document.getElementById("score").textContent = `正解 ${score}`;
+  document.getElementById("question").innerHTML = `
+    <div>${q.q}</div>
+    <div class="searchbox">
+      <div class="search-title">🔍 Google検索履歴</div>
+      ${q.history.map(item => `<div class="history-item">${item}</div>`).join("")}
+    </div>
+  `;
+  document.getElementById("result").innerHTML = "";
+
+  const choicesEl = document.getElementById("choices");
+  choicesEl.innerHTML = "";
+
+  shuffle([...q.choices]).forEach(choice => {
+    const btn = document.createElement("button");
+    btn.textContent = choice;
+    btn.onclick = () => checkAnswer(btn, choice);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function checkAnswer(button, choice){
+  if(lock) return;
+  lock = true;
+
+  const q = questions[current];
+  const buttons = document.querySelectorAll("#choices button");
+
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if(btn.textContent === q.answer){
+      btn.classList.add("correct");
+    }
+  });
+
+  if(choice === q.answer){
+    score++;
+    button.classList.add("correct");
+    document.getElementById("result").innerHTML =
+      `正解！<div class="explain">${q.explain}</div>`;
+  }else{
+    button.classList.add("wrong");
+    document.getElementById("result").innerHTML =
+      `不正解… 正解は「${q.answer}」<div class="explain">${q.explain}</div>`;
+  }
+
+  document.getElementById("score").textContent = `正解 ${score}`;
+
+  setTimeout(() => {
+    current++;
+    if(current < questions.length){
+      showQuestion();
+    }else{
+      finishGame();
+    }
+  }, 1700);
+}
+
+function finishGame(){
+  document.getElementById("question").textContent =
+    `50問終了！ ${score}問正解！`;
+
+  document.getElementById("choices").innerHTML = "";
+
+  let message = "";
+  if(score >= 45){
+    message = "検索履歴だけで偉人を見抜く、歴史探偵レベル！";
+  }else if(score >= 30){
+    message = "かなり詳しい！偉人の特徴をよくつかめています！";
+  }else{
+    message = "もう一度挑戦して、偉人たちのクセを覚えよう！";
+  }
+
+  document.getElementById("result").innerHTML = message;
+  document.getElementById("restart").style.display = "block";
+}
+
+function restartGame(){
+  startGame();
+}
+
+startGame();
+</script>
+
+</body>
+</html>
